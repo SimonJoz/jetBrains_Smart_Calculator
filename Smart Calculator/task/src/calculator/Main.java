@@ -1,5 +1,7 @@
 package calculator;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -9,22 +11,12 @@ import static calculator.VarAssigner.*;
 
 
 public class Main {
-    private static final String HELP = "The program calculates the sum of numbers.\n " +
-            "Note that even number of minuses gives plus, odd gives minus:\n" +
-            "   e.g 2 -- 2 equals 2 - (-2) equals 2 + 2.\n" +
-            "Calculator support variables and numbers.\n" +
-            "Assigning value pattern:\n" +
-            "  <variable> = <number/existingVariable> e.g count = 10, a = 4, b=a, c= b.\n" +
-            "It is possible to set new value to existing variable in any moment:\n" +
-            "  <existingVariable> = <newValue> \n" +
-            "To print the value of variable simply type its name.\n" +
-            "Operation examples:\n" +
-            "a + b - c,  a - 5, c -4 +6 -- 4, ";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
         Scanner scanner = new Scanner(System.in);
         VarAssigner varAssigner = new VarAssigner();
-        Calculation calculation = new Calculation(varAssigner);
+        Postfix postfix = new Postfix();
+        Calculation calculation = new Calculation(varAssigner, postfix);
 
         final String regex = String.format("%s|%s|%s|%s", VAR_ASSIGNMENT_REGEX,
                 INVALID_IDENTIFIER_REGEX, INVALID_ASSIGNMENT_REGEX, CALCULATION_REGEX);
@@ -35,11 +27,12 @@ public class Main {
             input = scanner.nextLine();
             Matcher matcher = pattern.matcher(input);
             if (matcher.find()) {
-                varAssigner.checkIsAssignmentCorrect(matcher);
+                varAssigner.isAssignmentCorrect(matcher);
                 if (varAssigner.isAssignment(matcher)) {
                     varAssigner.mapAssignment(matcher);
                 } else if (calculation.isCalculation(matcher)) {
-                    calculation.sum(input);
+                    postfix.convertToPostfix(input);
+                    calculateOrResetStack(postfix, calculation);
                 }
             } else
                 switch (input) {
@@ -47,7 +40,7 @@ public class Main {
                         System.out.print("Bye!");
                         break;
                     case "/help":
-                        System.out.println(HELP);
+                        importHelp();
                         break;
                     case "":
                         break;
@@ -56,6 +49,25 @@ public class Main {
                         break;
                 }
         } while (!input.equals("/exit"));
+    }
+
+    private static void calculateOrResetStack(Postfix postfix, Calculation calculation) {
+        if (postfix.isExpressionValid()) {
+            calculation.calculateResult();
+        } else {
+            System.out.println("Invalid expression");
+            postfix.resetStack();
+            /* call stack.clear() -- otherwise values will remain on stack
+                        and will be used at the next conversion  */
+        }
+    }
+
+    private static void importHelp() throws FileNotFoundException {
+        StringBuilder sb = new StringBuilder();
+        Scanner sc = new Scanner(new File("./help.txt"));
+        while (sc.hasNextLine()) {
+            System.out.println(sc.nextLine());
+        }
     }
 }
 
