@@ -1,21 +1,25 @@
     The program calculates the result, of mathematical operation.
     It"s fully support for addition +, subtraction -,
     multiplication *, integer division /, raising to a power ^ and parentheses (...).
+    Variables and very large numbers are also supported.
 
     Note that even number of minuses gives plus, odd gives minus:
         e.g 2 -- 2 equals 2 - (-2) equals 2 + 2.
 
-    Variables are also supported -- assigning value pattern:
+    Assigning value pattern:
         <variable> = <number/existingVariable>
         e.g count = 10, a = 4, b=a, c= b;
 
     It is possible to set new value to existing variable in any moment:
         <existingVariable> = <newValue>
         e.g a = 1, b = 2, a = b, a = 2;
+        a = 800000000000000000000000;
 
     To print the value of existing variable simply type its name.
 
     Example of correct expression:
+        ---- 112234567890 + 112234567890 * (10000000999 - 999)
+             1122345679012234567890
         ----   3 + 8 * ((4 + 3) * 2 + 1) - 6 / (2 + 1)
         ----   a*2+b*3+c*(2+3)
         ----   a- b + 4 -d*3- (g+4  )

@@ -1,5 +1,6 @@
 package calculator;
 
+import java.math.BigInteger;
 import java.util.Deque;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -10,8 +11,8 @@ import static calculator.Postfix.*;
 public class Calculation {
     public static final String CALCULATION_REGEX = String.format("%s%s%s",
             "^(?![/*^])(\\s*((?<![a-zA-Z])\\d+\\s*(?![a-zA-Z])|(?<!\\d)[a-zA-Z]+\\s*(?!\\d)",
-                    "|[-]+\\s*(?!\\W-[()])|[+]+\\s*(?!\\W-[()])|[*]+\\s*(?!\\W-[()])|",
-                    "[/]+\\s*(?!\\W-[()])|\\^+\\s*(?!\\W-[()])|[()]+\\s*))+$");
+            "|[-]+\\s*(?!\\W-[()])|[+]+\\s*(?!\\W-[()])|[*]+\\s*(?!\\W-[()])|",
+            "[/]+\\s*(?!\\W-[()])|\\^+\\s*(?!\\W-[()])|[()]+\\s*))+$");
 
     private VarAssigner assigner;
     private Postfix postfix;
@@ -29,7 +30,7 @@ public class Calculation {
         Deque<String> stack = postfix.getStack();
         String postfixResult = postfix.getPostfixResult();
         Matcher matcher = pattern.matcher(postfixResult);
-        long result;
+        BigInteger result = BigInteger.ZERO;
         boolean unknown = false;
         while (matcher.find()) {
             String operator = matcher.group(1);
@@ -38,6 +39,10 @@ public class Calculation {
             if (operator != null) {
                 operator = operator.trim(); // regex catch operators with space -- "- ","* "
                 result = performOperationDependOnOperator(operator, stack);
+                if (result == null) {
+                    stack.clear();
+                    break;
+                }
                 String value = String.valueOf(result);
                 stack.push(value);
             }
@@ -54,37 +59,50 @@ public class Calculation {
         }
         if (unknown) {
             System.out.println("Unknown variable");
-        } else {
-            result = Long.parseLong(stack.pop());
+        } else if (result != null) {
+            result = new BigInteger(stack.pop());
             System.out.println(result);
         }
     }
+
+    /*
+     *  in case of division by zero result = null !
+     *  stack must be reset otherwise remain
+     *  values will effect next calculation
+     */
 
     public boolean isCalculation(Matcher matcher) {
         return matcher.group(10) != null;
     }
 
-    private long performOperationDependOnOperator(String operator, Deque<String> stack) {
-        long result = 0;
-        long number2 = Long.parseLong(stack.pop());
-        long number1 = Long.parseLong(stack.pop());
-        switch (operator){
+    private BigInteger performOperationDependOnOperator(String operator, Deque<String> stack) {
+        BigInteger result = BigInteger.ZERO;
+        BigInteger number2 = new BigInteger(stack.pop());
+        BigInteger number1 = new BigInteger(stack.pop());
+        switch (operator) {
             case PLUS:
-                result = number1 + number2;
-                break;
+                return result.add(number1.add(number2));
             case MINUS:
-                result = number1 - number2;
-                break;
+                return result.add(number1.subtract(number2));
             case ASTERISK:
-                result = number1 * number2;
-                break;
+                return result.add(number1.multiply(number2));
             case BACKSLASH:
-                result = number1 / number2;
-                break;
+                if (isDivisionByZero(number2)) {
+                    return null;
+                }
+                return result.add(number1.divide(number2));
             case DASH:
-                result = (long) Math.pow(number1, number2);
-                break;
+                int pow = Integer.parseInt(String.valueOf(number2));
+                return result.add(number1.pow(pow));
         }
         return result;
+    }
+
+    private boolean isDivisionByZero(BigInteger number2) {
+        if (number2.equals(BigInteger.ZERO)) {
+            System.out.println("Cannot divide by zero.");
+            return true;
+        }
+        return false;
     }
 }
