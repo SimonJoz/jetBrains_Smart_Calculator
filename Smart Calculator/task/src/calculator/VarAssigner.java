@@ -4,20 +4,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 
+import static java.lang.String.format;
+
 public class VarAssigner {
     public static final String VAR_ASSIGNMENT_REGEX = "^(([a-zA-z]+)\\s*=+\\s*((\\d+)|([a-zA-Z]+)\\s*))$";
     public static final String INVALID_IDENTIFIER_REGEX =
             "^(([\\W&&[^\\s]]+.*|[\\D&&[^\\s]]+\\d.*|[\\w&&[^a-zA-Z]]+[a-zA-Z].*|\\S+[\\W&&[^\\s]].*)\\s*=.*)$";
-    public static final String INVALID_ASSIGNMENT_REGEX =
-            String.format("%s%s", "(.*=+\\s*([\\W&&[^\\s]]+.*|[\\D&&[^\\s]]+\\s*\\d.*|",
-                    "[\\w&&[^a-zA-Z]]+\\s*[a-zA-Z].*|\\S+\\s*[\\W&&[^\\s]].*))$");
+    public static final String INVALID_ASSIGNMENT_REGEX = format("%s%s",
+            "(.*=+\\s*([\\W&&[^\\s]]+.*|[\\D&&[^\\s]]+\\s*\\d.*|",
+            "[\\w&&[^a-zA-Z]]+\\s*[a-zA-Z].*|\\S+\\s*[\\W&&[^\\s]].*))$");
 
-    private Map<String, String> variables = new HashMap<>();
+    private final Map<String, String> variables = new HashMap<>();
 
-        /*
-         Assignment to var:
-            - Groups: 1-5;
-         */
+//     Assignment to var -- groups: 1-5;
     public void mapAssignment(Matcher matcher) {
         String key = matcher.group(2);
         String number = matcher.group(4);
@@ -33,12 +32,10 @@ public class VarAssigner {
         }
     }
 
-        /*
-       Invalid identifier:
-         - Groups: 6,7;
-       Invalid assignment:
-         - Groups: 8,9
-           */
+    /*
+     * Invalid identifier -- groups: 6,7;
+     * Invalid assignment -- groups: 8,9;
+     */
     public void isAssignmentCorrect(Matcher matcher) {
         if (matcher.group(6) != null) {
             System.out.println("Invalid identifier");

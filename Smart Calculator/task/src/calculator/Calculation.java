@@ -6,24 +6,26 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static calculator.Postfix.*;
+import static calculator.Constance.*;
+import static java.lang.String.format;
 
 public class Calculation {
-    public static final String CALCULATION_REGEX = String.format("%s%s%s",
+
+    public static final String CALCULATION_REGEX = format("%s%s%s",
             "^(?![/*^])(\\s*((?<![a-zA-Z])\\d+\\s*(?![a-zA-Z])|(?<!\\d)[a-zA-Z]+\\s*(?!\\d)",
             "|[-]+\\s*(?!\\W-[()])|[+]+\\s*(?!\\W-[()])|[*]+\\s*(?!\\W-[()])|",
             "[/]+\\s*(?!\\W-[()])|\\^+\\s*(?!\\W-[()])|[()]+\\s*))+$");
 
-    private VarAssigner assigner;
-    private Postfix postfix;
+    private final VarAssigner assigner;
+    private final Postfix postfix;
+
+    private final String regex = "([-+*/^]\\s+)|([-]?\\d+)|([a-zA-Z]+)";
+    private final Pattern pattern = Pattern.compile(regex);
 
     public Calculation(VarAssigner assigner, Postfix postfix) {
         this.assigner = assigner;
         this.postfix = postfix;
     }
-
-    private final String regex = "([-+*/^]\\s+)|([-]?\\d+)|([a-zA-Z]+)";
-    private Pattern pattern = Pattern.compile(regex);
 
     public void calculateResult() {
         Map<String, String> map = assigner.getVariables();
@@ -87,10 +89,7 @@ public class Calculation {
             case ASTERISK:
                 return result.add(number1.multiply(number2));
             case BACKSLASH:
-                if (isDivisionByZero(number2)) {
-                    return null;
-                }
-                return result.add(number1.divide(number2));
+                return tryForDivisionByZero(result, number2, number1);
             case DASH:
                 int pow = Integer.parseInt(String.valueOf(number2));
                 return result.add(number1.pow(pow));
@@ -98,11 +97,12 @@ public class Calculation {
         return result;
     }
 
-    private boolean isDivisionByZero(BigInteger number2) {
-        if (number2.equals(BigInteger.ZERO)) {
+    private BigInteger tryForDivisionByZero(BigInteger result, BigInteger number2, BigInteger number1) {
+        try {
+            return result.add(number1.divide(number2));
+        } catch (ArithmeticException ex) {
             System.out.println("Cannot divide by zero.");
-            return true;
+            return null;
         }
-        return false;
     }
 }

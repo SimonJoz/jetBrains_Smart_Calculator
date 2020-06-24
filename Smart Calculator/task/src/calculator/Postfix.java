@@ -5,24 +5,20 @@ import java.util.Deque;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static calculator.Constance.*;
+
 public class Postfix {
     private static final String LEFT_PARENTHESIS = "(";
     private static final String RIGHT_PARENTHESIS = ")";
-    public static final String ASTERISK = "*";
-    public static final String BACKSLASH = "/";
-    public static final String PLUS = "+";
-    public static final String MINUS = "-";
-    public static final String DASH = "^";
 
     private static boolean isCorrectOperator = true;
     private static boolean hasBalancedBrackets = true;
 
-    private String postfixResult;
-    private Deque<String> stack = new ArrayDeque<>();
-    private StringBuilder postfix = new StringBuilder();
-
+    private final Deque<String> stack = new ArrayDeque<>();
+    private final StringBuilder postfix = new StringBuilder();
     private final String regex = "([-]+)|([+]+)|([*/^]+)|([()])|(\\w+)";
-    private Pattern pattern = Pattern.compile(regex);
+    private final Pattern pattern = Pattern.compile(regex);
+    private String postfixResult;
 
     public void convertToPostfix(String infix) {
         if (infix.startsWith(MINUS)) {
@@ -31,29 +27,24 @@ public class Postfix {
         }
         Matcher matcher = pattern.matcher(infix);
         while (matcher.find()) {
-            String minusOperator = matcher.group(1);
-            String plusOperator = matcher.group(2);
-            String asteriskOrBackslash = matcher.group(3);
-            String parenthesis = matcher.group(4);
-            String digitOrVar = matcher.group(5);
+            final String minusOperator = matcher.group(1);
+            final String plusOperator = matcher.group(2);
+            final String asteriskOrBackslash = matcher.group(3);
+            final String parenthesis = matcher.group(4);
+            final String digitOrVar = matcher.group(5);
             if (minusOperator != null) {
-                String result = checkIsItPlusOrMinus(minusOperator);
-                pushOrPop(result);
+                pushOrPop(checkIsItPlusOrMinus(minusOperator));
             }
-            if (plusOperator != null) {
-                pushOrPop(PLUS);
-            }
+            ifNotNullPushOrPopOperator(plusOperator);
             if (asteriskOrBackslash != null) {
-                if (hasCorrectLength(asteriskOrBackslash)) {
+                if (asteriskOrBackslash.length() == 1) {
                     pushOrPop(asteriskOrBackslash);
                 } else {
                     isCorrectOperator = false;
                     break;
                 }
             }
-            if (parenthesis != null) {
-                pushOrPop(parenthesis);
-            }
+            ifNotNullPushOrPopOperator(parenthesis);
             if (digitOrVar != null) {
                 postfixAppend(digitOrVar);
             }
@@ -63,28 +54,11 @@ public class Postfix {
         resetStringBuilder();  // otherwise will append to previous value
     }
 
-    public boolean isExpressionValid() {
-        return !stack.contains(LEFT_PARENTHESIS)
-                && isCorrectOperator
-                && hasBalancedBrackets;
-    }
 
-    private void ifValidAppendAll() {
-        if (isExpressionValid()) {
-            stack.forEach(element -> postfixAppend(stack.pop()));
+    private void ifNotNullPushOrPopOperator(String operator) {
+        if (operator != null) {
+            pushOrPop(operator);
         }
-    }
-
-    public void resetStack() {
-        stack.clear();
-    }
-
-    public Deque<String> getStack() {
-        return stack;
-    }
-
-    public String getPostfixResult() {
-        return postfixResult;
     }
 
     private void pushOrPop(String operator) {
@@ -111,6 +85,18 @@ public class Postfix {
         }
     }
 
+    private void ifValidAppendAll() {
+        if (isExpressionValid()) {
+            stack.forEach(element -> postfixAppend(stack.pop()));
+        }
+    }
+
+    public boolean isExpressionValid() {
+        return !stack.contains(LEFT_PARENTHESIS)
+                && isCorrectOperator
+                && hasBalancedBrackets;
+    }
+
     private void comparePriorityAndAppend(String operator) {
         String head = stack.getFirst();
         int headPriority = checkPriority(head);
@@ -127,28 +113,19 @@ public class Postfix {
     }
 
     private int checkPriority(String operator) {
-        final int lowPriority = 0;
-        final int midPriority = 1;
-        final int highPriority = 2;
-        int priority = lowPriority;
+        int priority = 0;
+        final int mid = 1;
+        final int high = 2;
         if (ASTERISK.equals(operator) || BACKSLASH.equals(operator)) {
-            priority = midPriority;
+            priority = mid;
         } else if (DASH.equals(operator)) {
-            priority = highPriority;
+            priority = high;
         }
         return priority;
     }
 
-    private boolean hasCorrectLength(String asteriskOrBackslash) {
-        final int correctLength = 1;
-        int length = asteriskOrBackslash.length();
-        return length == correctLength;
-    }
-
     private String checkIsItPlusOrMinus(String operator) {
-        // "--" = "+";
-        int length = operator.length();
-        return length % 2 == 1 ? MINUS : PLUS;
+        return operator.length() % 2 == 1 ? MINUS : PLUS; // "--" = "+";
     }
 
     private void popAndAppendToResult() {
@@ -163,4 +140,16 @@ public class Postfix {
         postfix.delete(0, postfix.length());
     }
 
+
+    public void resetStack() {
+        stack.clear();
+    }
+
+    public Deque<String> getStack() {
+        return stack;
+    }
+
+    public String getPostfixResult() {
+        return postfixResult;
+    }
 }
